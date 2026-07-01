@@ -1,0 +1,26 @@
+name: Livermore Falls North Track
+description: North side trackers from Livermore Falls Site
+manufacturer: OMCO Star
+version: '2'
+tracker_length: 90.875
+support_count: 4
+span_lengths: []
+torque_tube_sections: []
+tube_segment_lengths: []
+module_type: ''
+modules_per_span: []
+support_type: ''
+support_section: ''
+foundation_type: ''
+bearing_types: []
+drive_type: ''
+drive_location: 0
+west_cantilever: 0.0
+east_cantilever: 0.0
+start_latitude: null
+start_longitude: null
+end_latitude: null
+end_longitude: null
+notes: ''
+tags:
+- edited by Jim
