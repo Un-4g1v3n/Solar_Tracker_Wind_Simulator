@@ -25,80 +25,46 @@ class TrackerTemplate:
     # General Information
     # ==========================================================
 
-    name: str = field(
-        default="New Tracker",
+    name: str = field(default="New Tracker",
         metadata={
-
     "group": "General",
-
     "description": "Template Name",
-
-    "units": "",
-
     "editable": True,
-
-    "choices": None,
-
-    "min": None,
-
-    "max": None,
-
-    "precision": 3
-
+    "required": True,
+    "default" :"New Tracker",
 }
     )
 
-    description: str = field(
-        default="",
+    description: str = field(default= "",
         metadata={
-
     "group": "General",
-
     "description": "Description",
-
-    "units": "",
-
     "editable": True,
-
-    "choices": None,
-
-    "min": None,
-
-    "max": None,
-
-    "precision": 3
-
+    "required": True,
+    "default": None,
 }
     )
 
-    manufacturer: str = field(
-        default="",
-        metadata={
+    manufacturer: str = field(default= "OMCO STAR",
+    metadata={
+        "group": "General",
+        "description": "Tracker manufacturer",
+        "editable": True,
+        "options": [
+            "OMCO STAR",
+            "P4Q",
+        ], 
+        "default": "OMCO STAR",
+        "required": True,
+    }
+)
 
-    "group": "General",
-
-    "description": "Manufacturer",
-
-    "units": "",
-
-    "editable": True,
-
-    "choices": ["OMCO STAR" ,"P4Q"], 
-
-    "min": None,
-
-    "max": None,
-
-    "precision": 3
-
-}
-    )
-
-    version: str = field(
-        default="1.0",
+    version: str = field(default= "1.0",
         metadata={
             "group": "General",
-            "description": "Template version"
+            "description": "Template version",
+            "default": "1.0",
+            "required": True, 
         }
     )
 
@@ -106,23 +72,31 @@ class TrackerTemplate:
     # Overall Geometry
     # ==========================================================
 
-    tracker_length: float = field(
-        default=90.0,
+    tracker_length: float = field(default= 90,
         metadata={
             "group": "Overall Geometry",
+            "description": "Overall tracker length",
             "units": "m",
             "min": 1.0,
-            "max": 300.0,
-            "description": "Overall tracker length"
+            "max": 400.0,
+            "editable": True,
+            "precision": 3,
+            "default": 90, 
+            "required": True,
+            
         }
     )
 
-    support_count: int = field(
-        default=7,
+    support_count: int = field(default= 7,
         metadata={
             "group": "Overall Geometry",
-            "min": 2,
-            "description": "Number of support posts"
+            "description": "Number of support posts",
+            "units": "",
+            "editable": True,
+            "min": 1,
+            "max": None,
+            "default": 7, 
+            "required": True,
         }
     )
 
@@ -130,20 +104,31 @@ class TrackerTemplate:
     # Span Geometry
     # ==========================================================
 
-    span_lengths: List[float] = field(
-        default_factory=lambda: [15.0] * 6,
+    span_lengths: List[float] = field(default= lambda: [15.0] * 6,
         metadata={
             "group": "Span Geometry",
+            "description": "Distance between Support posts",
             "units": "m",
-            "description": "Distance between supports"
+            "editable": True,
+            "min": 5,
+            "max": 50,
+            "precision": 3, 
+            "default": lambda: [15.0] * 6,
+            "required": True, 
         }
     )
 
-    modules_per_span: List[float] = field(
-        default_factory=lambda: [5.0] * 6,
+    modules_per_span: List[float] = field(default= lambda: [5.0] * 6, 
         metadata={
             "group": "Span Geometry",
-            "description": "Modules within each span"
+            "description": "Modules within each span",
+            "units": "",
+            "editable": True,
+            "min": 1,
+            "max": None,
+            "precision": 3, 
+            "default": lambda: [5.0] * 6,
+            "required": True, 
         }
     )
 
@@ -162,16 +147,25 @@ class TrackerTemplate:
         ],
         metadata={
             "group": "Torque Tubes",
-            "description": "Section used for each torque tube segment"
+            "description": "Section used for each torque tube segment",
+            "units": "",
+            "editable": True,
+            "default": None, 
+            "required": True, 
         }
     )
 
-    tube_segment_lengths: List[float] = field(
-        default_factory=lambda: [15.0] * 6,
+    tube_segment_lengths: List[float] = field(default= lambda: [15.0] * 6, 
         metadata={
             "group": "Torque Tubes",
+            "description": "Length of each tube segment",
             "units": "m",
-            "description": "Length of each tube segment"
+            "editable": True,
+            "min": 1,
+            "max": 20,
+            "precision": 3, 
+            "default": lambda: [15.0] * 6,
+            "required": True, 
         }
     )
 
@@ -179,30 +173,45 @@ class TrackerTemplate:
     # Solar Modules
     # ==========================================================
 
-    module_width: float = field(
-        default=1.30,
+    module_width: float = field(default= 1.3, 
         metadata={
             "group": "Solar Modules",
+            "description": "Module width",
             "units": "m",
-            "description": "Module width"
+            "editable": True,
+            "min": None,
+            "max": None,
+            "precision": 3,
+            "default": 1.3,
+            "required": True,
         }
     )
 
-    module_height: float = field(
-        default=2.30,
+    module_height: float = field(default= 2.3, 
         metadata={
             "group": "Solar Modules",
+            "description": "Module height",
             "units": "m",
-            "description": "Module height"
+            "editable": True,
+            "min": None,
+            "max": None,
+            "precision": 3,
+            "default": 2.3,
+            "required": True,
         }
     )
 
-    module_gap: float = field(
-        default=0.02,
+    module_gap: float = field(default= 0.2, 
         metadata={
             "group": "Solar Modules",
+            "description": "Gap between modules",
             "units": "m",
-            "description": "Gap between modules"
+            "editable": True,
+            "min": 0,
+            "max": None,
+            "precision": 3, 
+            "default": 0.2,
+            "required": True,
         }
     )
 
@@ -214,24 +223,36 @@ class TrackerTemplate:
         default="CPile_4p5x7p62",
         metadata={
             "group": "Supports",
-            "description": "Support section type"
+            "description": "Support section type",
+            "editable": True,
+            "options": None,
+            "default": "CPile_4p5x7p62",
+            "required": True,
         }
     )
 
-    foundation_type: str = field(
-        default="Driven Pile",
+    foundation_type: str = field(default= "driven pile", 
         metadata={
             "group": "Supports",
-            "description": "Foundation type"
+            "description": "Foundation type",
+            "editable": True,
+            "options": None,
+            "default": "Driven Pile",
+            "required": True,
         }
     )
 
-    embedment_depth: float = field(
-        default=2.5,
+    embedment_depth: float = field(default= 2.5, 
         metadata={
             "group": "Supports",
+            "description": "Foundation embedment",
             "units": "m",
-            "description": "Foundation embedment"
+            "editable": True,
+            "min": 0,
+            "max": None,
+            "precision": 3,
+            "default": 2.5,
+            "required": True,
         }
     )
 
@@ -239,12 +260,17 @@ class TrackerTemplate:
     # Bearings
     # ==========================================================
 
-    bearing_offset: float = field(
-        default=0.0,
+    bearing_offset: float = field(default= 0.0, 
         metadata={
             "group": "Bearings",
+            "description": "Bearing offset from support",
             "units": "m",
-            "description": "Bearing offset from support"
+            "editable": True,
+            "min": None,
+            "max": None,
+            "precision": 3,
+            "default": 0.0,
+            "required": True,
         }
     )
 
@@ -252,19 +278,24 @@ class TrackerTemplate:
     # Drive
     # ==========================================================
 
-    drive_location: int = field(
-        default=3,
+    drive_location: int = field(default= 3, 
         metadata={
             "group": "Drive",
-            "description": "Support containing drive"
+            "description": "Support containing drive",
+            "editable": True,
+            "default": 3,
+            "required": True,
         }
     )
 
-    motor_name: str = field(
-        default="Default Drive",
+    motor_name: str = field(default= "Kinematics", 
         metadata={
             "group": "Drive",
-            "description": "Drive motor"
+            "description": "Drive motor",
+            "editable": True,
+            "options": None,
+            "default": "Kinematics",
+            "required": True,
         }
     )
 
@@ -272,21 +303,32 @@ class TrackerTemplate:
     # Cantilevers
     # ==========================================================
 
-    cantilever_left: float = field(
-        default=3.0,
+    cantilever_left: float = field(default= 3.0, 
         metadata={
             "group": "Cantilevers",
+            "description": "Left cantilever",
             "units": "m",
-            "description": "Left cantilever"
+            "editable": True,
+            "min": None,
+            "max": None,
+            "precision": 3,
+            "default": 3.0,
+            "required": True,
         }
     )
 
-    cantilever_right: float = field(
-        default=3.0,
+    cantilever_right: float = field(default= 3.0, 
         metadata={
             "group": "Cantilevers",
+            "description": "Right cantilever",
             "units": "m",
-            "description": "Right cantilever"
+            "editable": True,
+            "options": None,
+            "min": None,
+            "max": None,
+            "precision": 3, 
+            "default": 3.0,
+            "required": True,
         }
     )
 
@@ -294,38 +336,58 @@ class TrackerTemplate:
     # GPS Layout
     # ==========================================================
 
-    latitude_start: float = field(
-        default=0.0,
+    latitude_start: float = field(default= 0.0, 
         metadata={
             "group": "GPS Layout",
+            "description": "Starting latitude",
             "units": "deg",
-            "description": "Starting latitude"
+            "editable": True,
+            "min": None,
+            "max": None,
+            "precision": 5, 
+            "default": 0.0,
+            "required": True,
         }
     )
 
-    longitude_start: float = field(
-        default=0.0,
+    longitude_start: float = field(default= 0.0,
         metadata={
             "group": "GPS Layout",
+            "description": "Starting longitude",
             "units": "deg",
-            "description": "Starting longitude"
+            "editable": True,
+            "min": None,
+            "max": None,
+            "precision": 5,
+            "default": 0.0,
+            "required": True,
         }
     )
 
-    latitude_end: float = field(
-        default=0.0,
+    latitude_end: float = field(default= 0.0,
         metadata={
             "group": "GPS Layout",
-            "units": "deg",
-            "description": "Ending latitude"
+            "description": "Ending latitude",
+            "units": "",
+            "editable": True,
+            "min": None,
+            "max": None,
+            "precision": 5, 
+            "default": 0.0,
+            "required": True,
         }
     )
 
-    longitude_end: float = field(
-        default=0.0,
+    longitude_end: float = field(default= 0.0,
         metadata={
             "group": "GPS Layout",
+            "description": "Ending longitude",
             "units": "deg",
-            "description": "Ending longitude"
+            "editable": True,
+            "min": None,
+            "max": None,
+            "precision": 5, 
+            "default": 0.0,
+            "required": True,
         }
     )

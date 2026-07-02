@@ -5,155 +5,326 @@ Property Editor
 
 ========================================================================
 
-Generic dataclass editor.
+Public API for editing dataclass objects.
 
-Features
+Responsibilities
 
-    • Automatic grouping using metadata["group"]
-    • Units display
-    • Descriptions
-    • Primitive types
-    • List editing
-    • Works with ANY dataclass
+    • Present grouped editing menus
+    • Display engineering metadata
+    • Coordinate parsing
+    • Coordinate formatting
+    • Coordinate validation
+    • Coordinate option registries
+
+All parsing, formatting, validation and grouping logic lives in
+their own modules.
+
+Public API
+
+    edit_object(obj)
 
 ========================================================================
 """
 
 from dataclasses import fields
-from collections import OrderedDict
-from typing import get_origin, get_args
 
+from core.property_groups import (
+    group_names,
+    fields_in_group,
+)
+
+from core.property_formatter import (
+    format_display,
+)
+
+from core.property_parser import (
+    parse_value,
+)
+
+from core.property_validation import (
+    validate,
+)
+
+from core.option_registry import (
+    get_options,
+)
+from core.property_metadata import display_metadata
 
 # ======================================================================
 # Helpers
 # ======================================================================
 
-def _format_value(value):
-
-    if isinstance(value, list):
-
-        if not value:
-            return "[]"
-
-        return ", ".join(str(v) for v in value)
-
-    return str(value)
-
-
-# ======================================================================
-
-def _parse_value(current, annotation, text):
-
-    origin = get_origin(annotation)
-
-    args = get_args(annotation)
-
-    #
-    # Leave unchanged
-    #
-
-    if text == "":
-
-        return current
-
-    #
-    # Lists
-    #
-
-    if origin is list:
-
-        subtype = args[0]
-
-        values = [
-
-            item.strip()
-
-            for item in text.split(",")
-
-            if item.strip() != ""
-
-        ]
-
-        if subtype is float:
-
-            return [float(v) for v in values]
-
-        if subtype is int:
-
-            return [int(v) for v in values]
-
-        return values
-
-    #
-    # Primitive types
-    #
-
-    if annotation is float:
-
-        return float(text)
-
-    if annotation is int:
-
-        return int(text)
-
-    if annotation is bool:
-
-        return text.lower() in (
-
-            "true",
-            "yes",
-            "y",
-            "1",
-
-        )
-
-    return text
-
-
-# ======================================================================
-
-def _field_groups(obj):
-
+def _display_choices(options):
     """
+    Display a numbered list of available options.
+
     Returns
-
-        OrderedDict
-
-    group_name -> list(field)
+    -------
+    selected_value or None
     """
 
-    groups = OrderedDict()
+    print()
 
-    for f in fields(obj):
+    for i, value in enumerate(options, start=1):
 
-        group = f.metadata.get(
+        print(f"{i:2d}. {value}")
 
-            "group",
+    print()
 
-            "General",
+    selection = input("Selection : ").strip()
 
-        )
+    if selection == "":
 
-        groups.setdefault(
+        return None
 
-            group,
+    try:
 
-            []
+        index = int(selection) - 1
 
-        ).append(f)
+        return options[index]
 
-    return groups
+    except Exception:
+
+        print()
+
+        print("Invalid selection.")
+
+        input("Press ENTER...")
+
+        return None
 
 
 # ======================================================================
+# Edit One Field
+# ======================================================================
 
-def _edit_group(obj, group_name, group_fields):
-
+def _edit_field(obj, field):
     """
-    Edit one metadata group.
+    Edit a single dataclass field.
+
+    Returns
+    -------
+    bool
+
+        True if the field changed.
+    """
+
+    metadata = field.metadata
+
+    current = getattr(obj, field.name)
+
+    print()
+
+    print("=" * 70)
+    print(field.name)
+    print("=" * 70)
+    print()
+
+    #
+    # Description
+    #
+
+    description = metadata.get("description")
+
+    if description:
+
+        print(description)
+        print()
+
+    #
+    # Current value
+    #
+
+    print("Current Value")
+
+    print(
+
+        format_display(
+
+            current,
+
+            metadata.get("units"),
+
+            metadata.get("precision"),
+
+        )
+
+    )
+
+    print()
+
+    #
+    # Engineering metadata
+    #
+
+    display_metadata(field)
+
+    #
+    # Option list?
+    #
+
+    options = metadata.get("options")
+
+    #
+    # Registry-backed list
+    #
+
+    if isinstance(options, str):
+
+        options = get_options(options)
+
+    #
+    # Menu selection
+    #
+
+    if isinstance(options, list):
+
+        print()
+
+        print("Available Options")
+
+        print("-----------------")
+
+        for i, option in enumerate(options, start=1):
+
+            print(f"{i:2d}. {option}")
+
+        print()
+
+        selection = input(
+            "Selection (ENTER to cancel): "
+        ).strip()
+
+        if selection == "":
+
+            return False
+
+        try:
+
+            parsed = options[int(selection) - 1]
+
+        except Exception:
+
+            print()
+
+            print("Invalid selection.")
+
+            input("Press ENTER...")
+
+            return False
+
+    #
+    # Free-text entry
+    #
+
+    else:
+
+        print()
+
+        text = input(
+            "New Value (ENTER to keep current): "
+        )
+
+        if text == "":
+
+            return False
+
+        try:
+
+            parsed = parse_value(
+
+                current,
+
+                field.type,
+
+                text,
+
+            )
+
+        except Exception as ex:
+
+            print()
+
+            print(ex)
+
+            input("Press ENTER...")
+
+            return False
+
+    #
+    # Validate
+    #
+
+    valid, reason = validate(
+
+        parsed,
+
+        metadata,
+
+    )
+
+    if not valid:
+
+        print()
+
+        print(reason)
+
+        input("Press ENTER...")
+
+        return False
+
+    #
+    # No change?
+    #
+
+    if parsed == current:
+
+        return False
+
+    #
+    # Store
+    #
+
+    setattr(
+
+        obj,
+
+        field.name,
+
+        parsed,
+
+    )
+
+    print()
+
+    print("Value updated.")
+
+    input("Press ENTER...")
+
+    return True
+# ======================================================================
+# Edit One Group
+# ======================================================================
+
+def _edit_group(obj, group_name):
+    """
+    Edit all fields within a single property group.
+
+    Returns
+    -------
+    bool
+        True if any property was modified.
     """
 
     modified = False
+
+    group = fields_in_group(
+
+        obj,
+
+        group_name,
+
+    )
 
     while True:
 
@@ -167,35 +338,55 @@ def _edit_group(obj, group_name, group_fields):
 
         print()
 
-        for i, f in enumerate(group_fields, start=1):
+        #
+        # Display all properties
+        #
 
-            value = getattr(obj, f.name)
+        for index, field in enumerate(group, start=1):
 
-            units = f.metadata.get("units", "")
+            metadata = field.metadata
 
-            description = f.metadata.get(
+            value = getattr(
 
-                "description",
+                obj,
 
-                ""
+                field.name,
+
+            )
+
+            display = format_display(
+
+                value,
+
+                metadata.get("units"),
+
+                metadata.get("precision"),
 
             )
 
             print(
 
-                f"{i:2d}. "
+                f"{index:2d}. "
 
-                f"{f.name:<30}"
+                f"{field.name:<32}"
 
-                f"{_format_value(value)}"
+                f"{display}"
 
-                f" {units}"
+            )
+
+            description = metadata.get(
+
+                "description"
 
             )
 
             if description:
 
-                print(f"      {description}")
+                print(
+
+                    f"      {description}"
+
+                )
 
         print()
 
@@ -203,150 +394,91 @@ def _edit_group(obj, group_name, group_fields):
 
         print()
 
-        selection = input("Property : ").strip()
+        selection = input(
+
+            "Property : "
+
+        ).strip()
+
+        #
+        # Return to previous menu
+        #
 
         if selection == "0":
 
             return modified
 
+        #
+        # Lookup field
+        #
+
         try:
 
-            field = group_fields[int(selection) - 1]
+            field = group[
+
+                int(selection) - 1
+
+            ]
 
         except Exception:
 
             print()
 
-            print("Invalid selection.")
+            print(
 
-            continue
-
-        current = getattr(obj, field.name)
-
-        print()
-
-        print(field.name)
-
-        print("-" * len(field.name))
-
-        print()
-
-        print("Current Value")
-
-        print(current)
-
-        units = field.metadata.get("units")
-
-        if units:
-
-            print(f"Units : {units}")
-
-        minimum = field.metadata.get("min")
-
-        maximum = field.metadata.get("max")
-
-        if minimum is not None:
-
-            print(f"Minimum : {minimum}")
-
-        if maximum is not None:
-
-            print(f"Maximum : {maximum}")
-
-        print()
-
-        new_value = input("New Value : ")
-
-        try:
-
-            parsed = _parse_value(
-
-                current,
-
-                field.type,
-
-                new_value,
+                "Invalid selection."
 
             )
 
-        except Exception as ex:
+            input(
 
-            print()
+                "Press ENTER..."
 
-            print(ex)
+            )
 
             continue
 
         #
-        # Range validation
+        # Edit selected field
         #
 
-        if minimum is not None:
-
-            if isinstance(parsed, (int, float)):
-
-                if parsed < minimum:
-
-                    print()
-
-                    print(
-
-                        f"Value must be >= {minimum}"
-
-                    )
-
-                    continue
-
-        if maximum is not None:
-
-            if isinstance(parsed, (int, float)):
-
-                if parsed > maximum:
-
-                    print()
-
-                    print(
-
-                        f"Value must be <= {maximum}"
-
-                    )
-
-                    continue
-
-        setattr(
+        changed = _edit_field(
 
             obj,
 
-            field.name,
-
-            parsed,
+            field,
 
         )
 
-        modified = True
+        modified = (
 
+            modified or changed
 
+        )
+        
 # ======================================================================
-# Public Editor
+# Public API
 # ======================================================================
 
 def edit_object(obj):
-
     """
-    Generic grouped editor.
+    Edit any dataclass using metadata.
+
+    Parameters
+    ----------
+    obj
+        Dataclass instance to edit.
 
     Returns
+    -------
+    bool
 
-        True if modified.
+        True if one or more properties changed.
 
         False otherwise.
     """
 
     modified = False
-
-    groups = _field_groups(obj)
-
-    group_names = list(groups.keys())
 
     while True:
 
@@ -360,9 +492,15 @@ def edit_object(obj):
 
         print()
 
-        for i, group in enumerate(group_names, start=1):
+        groups = group_names(obj)
 
-            print(f"{i}. {group}")
+        #
+        # Show available groups
+        #
+
+        for index, group in enumerate(groups, start=1):
+
+            print(f"{index}. {group}")
 
         print()
 
@@ -372,13 +510,21 @@ def edit_object(obj):
 
         selection = input("Section : ").strip()
 
+        #
+        # Finished editing
+        #
+
         if selection == "0":
 
             return modified
 
+        #
+        # Select group
+        #
+
         try:
 
-            group = group_names[int(selection) - 1]
+            group = groups[int(selection) - 1]
 
         except Exception:
 
@@ -386,7 +532,13 @@ def edit_object(obj):
 
             print("Invalid selection.")
 
+            input("Press ENTER...")
+
             continue
+
+        #
+        # Edit selected group
+        #
 
         changed = _edit_group(
 
@@ -394,8 +546,10 @@ def edit_object(obj):
 
             group,
 
-            groups[group],
-
         )
 
-        modified = modified or changed
+        modified = (
+
+            modified or changed
+
+        )
